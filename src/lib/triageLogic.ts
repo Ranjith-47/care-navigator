@@ -233,25 +233,27 @@ export function categorizeSymptom(symptom: string): string {
 
 // -------------------------------
 // TRIAGE QUESTIONS
+// Reordered: Collect all symptoms first, then demographic/clinical info, then at the end show disease prediction
 // -------------------------------
 export const TRIAGE_QUESTIONS = [
-  { id: 1, question: "What is your age?", options: [] },
-  {
-    id: 2,
-    question: "Do you have any existing medical conditions? (e.g., diabetes, asthma, BP)",
-    options: []
-  },
+  { id: 1, question: "Do you have any other symptoms?", options: [] },
+  { id: 2, question: "Do you have any additional symptoms?", options: [] },
   {
     id: 3,
-    question: "How long have you had this symptom? \n [Few hours, 1 day, 2 days, 3 days, More than 3 days]",
-    options: ["Few hours", "1 day", "2 days","3 days", "More than 3 days"]
+    question: "How long have you had this symptom?",
+    options: ["Few hours", "1 day", "2 days", "3 days", "More than 3 days"]
   },
   {
     id: 4,
     question: "On a scale of 1–10, how severe is your symptom?",
     options: ["1","2","3","4","5","6","7","8","9","10"]
   },
-  { id: 5, question: "Do you have any additional symptoms?", options: [] }
+  { id: 5, question: "What is your age?", options: [] },
+  {
+    id: 6,
+    question: "Do you have any existing medical conditions? (e.g., diabetes, asthma, BP)",
+    options: []
+  }
 ];
 
 // -------------------------------
@@ -266,23 +268,17 @@ export function validateAnswer(
 
   switch (questionId) {
 
-    case 1: {
-      const age = Number(text);
-      if (!Number.isInteger(age) || age <= 0 || age > 120) {
-        return { type: "retry", message: "I can help you only with medical related problems \nPlease enter a valid age in numbers (e.g., 25)." };
-      }
-      return { type: "accepted", value: age };
-    }
-
+    case 1:
     case 2: {
+      // Additional symptoms validation
       if (!isHealthRelated(text) && text !== "no" && text !== "none") {
-        return { type: "retry", message: "Please mention a medical condition or type 'no'." };
+        return { type: "retry", message: "Please mention symptoms or type 'no'." };
       }
       return { type: "accepted", value: text };
     }
 
     case 3: {
-      const allowed = ["few hours", "1 day", "2–3 days", "more than 3 days"];
+      const allowed = ["few hours", "1 day", "2 days", "3 days", "more than 3 days"];
       if (!allowed.some(d => text.includes(d))) {
         return { type: "retry", message: "Please select one of the given duration options." };
       }
@@ -298,8 +294,16 @@ export function validateAnswer(
     }
 
     case 5: {
-      if (!isHealthRelated(text) && text !== "no") {
-        return { type: "retry", message: "Please describe health-related symptoms or type 'no'." };
+      const age = Number(text);
+      if (!Number.isInteger(age) || age <= 0 || age > 120) {
+        return { type: "retry", message: "Please enter a valid age in numbers (e.g., 25)." };
+      }
+      return { type: "accepted", value: age };
+    }
+
+    case 6: {
+      if (!isHealthRelated(text) && text !== "no" && text !== "none") {
+        return { type: "retry", message: "Please mention a medical condition or type 'no'." };
       }
       return { type: "accepted", value: text };
     }
